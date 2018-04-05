@@ -39,19 +39,22 @@ class IniParser
             $line = fgets($handle);
 
             if (preg_match('#\[([a-zA-Z_]{1,})\]#', $line, $matches)) {
-                if (isset($this->parsedIni[$matches[1]])) {
+                if (isset($this->parsedIni[strtoupper($matches[1])])) {
                     throw new Exception('Duplicate section');
                 }
 
-                $this->actualSection = $matches[1];
+                $this->actualSection = strtoupper($matches[1]);
             } else if (preg_match('#([a-zA-Z_]{1,})=(.*)#', $line, $matches)) {
-                if (isset($this->parsedIni[$this->actualSection][$matches[1]])) {
+                if (isset($this->parsedIni[$this->actualSection][strtolower($matches[1])])) {
                     throw new Exception('Duplicate key');
                 }
 
-                $key = $matches[1];
+                $key = strtolower($matches[1]);
                 $value = preg_replace('# ;.*#', '', $matches[2]);
 
+                if (substr($value, 0, 1) === '"' && substr($value, -1) === '"') {
+                    $value = substr($value, 1, -1);
+                }
                 $this->parsedIni[$this->actualSection][$key] = $value;
             }
         }
@@ -70,11 +73,53 @@ class IniParser
      */
     public function getValue(string $section, string $key): string
     {
-        if (isset($this->parsedIni[$section][$key])) {
-            return $this->parsedIni[$section][$key];
+        if (isset($this->parsedIni[strtoupper($section)][strtolower($key)])) {
+            return $this->parsedIni[strtoupper($section)][strtolower($key)];
         }
 
         return '';
+    }
+
+    /**
+     * Renvoi la valeur au format nomnbre entier
+     *
+     * @param string $section
+     * @param string $key
+     * @return int
+     */
+    public function getIntValue(string $section, string $key): int
+    {
+        return intval($this->getValue($section, $key));
+    }
+
+    /**
+     * Renvoi la valeur au format nombre à virgule flottante
+     *
+     * @param string $section
+     * @param string $key
+     * @return float
+     */
+    public function getFloatValue(string $section, string $key): float
+    {
+        return floatval($this->getValue($section, $key));
+    }
+
+    /**
+     * @param string $section
+     * @param string $key
+     * @return bool
+     */
+    public function getBoolValue(string $section, string $key): bool
+    {
+        $value = $this->getValue($section, $key);
+
+        if (strtolower($value) === 'yes' || $value === true) {
+            return true;
+        } else if ($value === false) {
+            return false;
+        }
+
+        return false;
     }
 
     /**
@@ -85,7 +130,7 @@ class IniParser
      */
     public function isSectionExist(string $section): bool
     {
-        return isset($this->parsedIni[$section]);
+        return isset($this->parsedIni[strtoupper($section)]);
     }
 
     /**
@@ -97,7 +142,7 @@ class IniParser
      */
     public function isKeyExist(string $section, string $key): bool
     {
-        return isset($this->parsedIni[$section][$key]);
+        return isset($this->parsedIni[strtoupper($section)][strtolower($key)]);
     }
 
     /**
@@ -118,7 +163,10 @@ class IniParser
             throw  new Exception('The key name selected to add, is not valid');
         }
 
-        $this->parsedIni[$section][$key] = $val;
+        if (is_string($val)) {
+            $val = sprintf('"%s"', $val);
+        }
+        $this->parsedIni[strtoupper($section)][strtolower($key)] = $val;
     }
 
     /**
@@ -138,11 +186,17 @@ class IniParser
             $file[] = '['.$section.']';
 
             foreach ($array as $key => $val) {
+                if (is_bool($val)) {
+                    if ($val) {
+                        $val = 'yes';
+                    } else {
+                        $val = 'no';
+                    }
+                }
                 $file[] = $key.'='.$val;
             }
         }
 
-        //var_dump($file);
         file_put_contents($filename, implode("\n", $file));
     }
 }
