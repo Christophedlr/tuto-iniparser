@@ -1,0 +1,17 @@
+Les sections :
+- Commence et sa termine par un crochet
+- Majuscules, minuscules et des underscores
+- Le résultat (dans les recherches tout du moins) c'est en majuscules
+- Pas d'espaces ni de chiffres ou caractères spéciaux autres que le underscore
+- Pas de doublons
+
+Les pairs clé/valeur :
+- Lettres majuscules/minuscules et underscores
+- Pas d'espaces ni de chiffres ou caractères spéciaux autres que le underscore
+- Les valeurs peuvent avoir tout type de caractères
+- Le résultat est considéré comme étant en minuscule
+- Pas de doublons
+
+Les commentaires :
+- Commmence par un point-virgule, le restant de la ligne est considéré comme un commentaire
+- Les commentaires peuvent être mis sur la même ligne qu'une pair clé/valeur ou une section : espace et point-virgule
