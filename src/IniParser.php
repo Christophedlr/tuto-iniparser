@@ -7,6 +7,7 @@ class IniParser
 {
     private $parsedIni = [];
     private $actualSection = '';
+    private $filename = '';
 
     /**
      * IniParser constructor.
@@ -56,6 +57,8 @@ class IniParser
         }
 
         fclose($handle);
+
+        $this->filename = $filename;
     }
 
     /**
@@ -95,5 +98,51 @@ class IniParser
     public function isKeyExist(string $section, string $key): bool
     {
         return isset($this->parsedIni[$section][$key]);
+    }
+
+    /**
+     * Ajoute ou modifie une valeur dans le fichier INI
+     *
+     * @param string $section
+     * @param string $key
+     * @param $val
+     * @throws Exception
+     */
+    public function addValue(string $section, string $key, $val)
+    {
+        if (!preg_match('#([a-zA-Z_]{1,})#', $section, $matches)) {
+            throw  new Exception('The section name selected to add, is not valid');
+        }
+
+        if (!preg_match('#([a-zA-Z_]{1,})#', $key, $matches)) {
+            throw  new Exception('The key name selected to add, is not valid');
+        }
+
+        $this->parsedIni[$section][$key] = $val;
+    }
+
+    /**
+     * Sauvegarde un nouveau fichier INI ou le fichier actuel
+     *
+     * @param string $filename
+     */
+    public function save(string $filename = '')
+    {
+        if (empty($filename)) {
+            $filename = $this->filename;
+        }
+
+        $file = [];
+
+        foreach ($this->parsedIni as $section => $array) {
+            $file[] = '['.$section.']';
+
+            foreach ($array as $key => $val) {
+                $file[] = $key.'='.$val;
+            }
+        }
+
+        //var_dump($file);
+        file_put_contents($filename, implode("\n", $file));
     }
 }
